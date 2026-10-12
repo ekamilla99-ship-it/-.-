@@ -1,0 +1,1164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Математическое Приключение: 1-4 классы</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts & Font Awesome Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@400;600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti library -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: radial-gradient(circle at top right, #e0f2fe, #f0fdf4, #fef3c7);
+      min-height: 100vh;
+      color: #1e293b;
+    }
+    .font-kids {
+      font-family: 'Comfortaa', cursive;
+    }
+    /* Soft 3D playful buttons */
+    .btn-3d {
+      transition: all 0.15s ease-in-out;
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.12);
+    }
+    .btn-3d:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, 0.12);
+    }
+    .math-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.08), 0 8px 16px -6px rgba(0, 0, 0, 0.05);
+    }
+    @keyframes pulse-subtle {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.03); }
+    }
+    .pulse-subtle {
+      animation: pulse-subtle 2s infinite ease-in-out;
+    }
+    @keyframes shake-wrong {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-8px); }
+      40%, 80% { transform: translateX(8px); }
+    }
+    .shake-error {
+      animation: shake-wrong 0.4s ease-in-out;
+    }
+    /* Custom scrollbar for leaderboard table */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-800 antialiased selection:bg-amber-200">
+
+  <header class="w-full bg-white/80 backdrop-blur-md border-b border-sky-100 sticky top-0 z-40 shadow-sm">
+    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchView('welcome')">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-400 to-orange-400 flex items-center justify-center text-white shadow-md text-xl">
+          <i class="fa-solid fa-calculator"></i>
+        </div>
+        <div>
+          <h1 class="font-kids text-lg md:text-xl font-bold text-slate-800 tracking-tight leading-none">
+            МатемаТурнир <span class="text-orange-500">⭐</span>
+          </h1>
+          <p class="text-xs text-slate-500 font-semibold mt-0.5">Сложение и вычитание (1–4 классы)</p>
+        </div>
+      </div>
+
+      <!-- Quick Nav Buttons -->
+      <div class="flex items-center space-x-2">
+        <button id="navGameBtn" onclick="switchView('welcome')" class="px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-sm font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 transition flex items-center gap-1.5">
+          <i class="fa-solid fa-gamepad"></i>
+          <span class="hidden sm:inline">Играть</span>
+        </button>
+        <button id="navStatsBtn" onclick="switchView('leaderboard')" class="px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-sm font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 transition flex items-center gap-1.5 relative">
+          <i class="fa-solid fa-trophy text-amber-500"></i>
+          <span>Журнал успехов</span>
+          <span id="navLiveBadge" class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <section class="max-w-5xl mx-auto px-4 pt-4 w-full">
+    <div class="bg-white/90 border border-slate-200/80 rounded-2xl p-3 md:p-4 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-2 md:gap-4 text-center">
+      <div class="p-2 rounded-xl bg-blue-50/70 border border-blue-100">
+        <p class="text-xs font-bold text-blue-600 uppercase tracking-wider">Всего участников</p>
+        <p id="statTotalGames" class="text-xl md:text-2xl font-black text-blue-900 mt-0.5">0</p>
+      </div>
+      <div class="p-2 rounded-xl bg-emerald-50/70 border border-emerald-100">
+        <p class="text-xs font-bold text-emerald-600 uppercase tracking-wider">Сыграно сегодня</p>
+        <p id="statTodayGames" class="text-xl md:text-2xl font-black text-emerald-900 mt-0.5">0</p>
+      </div>
+      <div class="p-2 rounded-xl bg-amber-50/70 border border-amber-100">
+        <p class="text-xs font-bold text-amber-600 uppercase tracking-wider">Идеальных партий</p>
+        <p id="statPerfectGames" class="text-xl md:text-2xl font-black text-amber-900 mt-0.5">0</p>
+      </div>
+      <div class="p-2 rounded-xl bg-purple-50/70 border border-purple-100">
+        <p class="text-xs font-bold text-purple-600 uppercase tracking-wider">Лидер активности</p>
+        <p id="statTopGrade" class="text-base md:text-lg font-black text-purple-900 mt-1 truncate">1 класс</p>
+      </div>
+    </div>
+  </section>
+
+  <main class="flex-grow max-w-5xl mx-auto px-4 py-6 w-full flex items-center justify-center">
+
+    <!-- VIEW 1: WELCOME & SETUP -->
+    <div id="welcomeView" class="w-full max-w-xl mx-auto math-card rounded-3xl p-6 md:p-8 border border-white/60">
+      <div class="text-center mb-6">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 mb-2">
+          🎯 Веселая математическая тренировка
+        </span>
+        <h2 class="font-kids text-2xl md:text-3xl font-extrabold text-slate-800">
+          Готов к приключению?
+        </h2>
+        <p class="text-sm text-slate-600 mt-1">
+          Введи своё имя, выбери класс и отвечай на примеры!
+        </p>
+      </div>
+
+      <!-- Avatar & Name Input -->
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-1.5">
+            <i class="fa-solid fa-user-astronaut text-sky-500 mr-1"></i> Как тебя зовут?
+          </label>
+          <div class="flex gap-2">
+            <!-- Selected Avatar Preview -->
+            <button id="avatarPickerBtn" onclick="toggleAvatarDrawer()" class="w-14 h-14 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-3xl shadow-sm hover:scale-105 transition" title="Выбрать аватар">
+              <span id="currentAvatarEmoji">🦊</span>
+            </button>
+            <input type="text" id="playerNameInput" maxlength="24" placeholder="Например: Алина или Тимур" 
+              class="flex-1 bg-slate-50 border-2 border-slate-200 rounded-2xl px-4 py-3 text-lg font-bold text-slate-800 focus:outline-none focus:border-amber-400 focus:bg-white transition" />
+          </div>
+          <p id="nameError" class="text-xs text-rose-500 font-bold mt-1.5 hidden">
+            ⚠️ Пожалуйста, напиши своё имя, чтобы попасть в таблицу рекордов!
+          </p>
+        </div>
+
+        <!-- Avatar Choice Drawer -->
+        <div id="avatarDrawer" class="hidden bg-slate-50 border border-slate-200 rounded-2xl p-3">
+          <p class="text-xs font-bold text-slate-500 mb-2 text-center">Выбери персонажа:</p>
+          <div class="grid grid-cols-6 gap-2 text-2xl">
+            <button type="button" onclick="selectAvatar('🦊')" class="p-2 hover:bg-white rounded-xl text-center transition">🦊</button>
+            <button type="button" onclick="selectAvatar('🐻')" class="p-2 hover:bg-white rounded-xl text-center transition">🐻</button>
+            <button type="button" onclick="selectAvatar('🐱')" class="p-2 hover:bg-white rounded-xl text-center transition">🐱</button>
+            <button type="button" onclick="selectAvatar('🦁')" class="p-2 hover:bg-white rounded-xl text-center transition">🦁</button>
+            <button type="button" onclick="selectAvatar('🦉')" class="p-2 hover:bg-white rounded-xl text-center transition">🦉</button>
+            <button type="button" onclick="selectAvatar('🦄')" class="p-2 hover:bg-white rounded-xl text-center transition">🦄</button>
+            <button type="button" onclick="selectAvatar('🚀')" class="p-2 hover:bg-white rounded-xl text-center transition">🚀</button>
+            <button type="button" onclick="selectAvatar('🐼')" class="p-2 hover:bg-white rounded-xl text-center transition">🐼</button>
+            <button type="button" onclick="selectAvatar('🐰')" class="p-2 hover:bg-white rounded-xl text-center transition">🐰</button>
+            <button type="button" onclick="selectAvatar('🦖')" class="p-2 hover:bg-white rounded-xl text-center transition">🦖</button>
+            <button type="button" onclick="selectAvatar('⭐')" class="p-2 hover:bg-white rounded-xl text-center transition">⭐</button>
+            <button type="button" onclick="selectAvatar('🤖')" class="p-2 hover:bg-white rounded-xl text-center transition">🤖</button>
+          </div>
+        </div>
+
+        <!-- Grade Selector -->
+        <div>
+          <label class="block text-sm font-bold text-slate-700 mb-2">
+            <i class="fa-solid fa-graduation-cap text-indigo-500 mr-1"></i> Твой класс:
+          </label>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <!-- 1 класс -->
+            <button type="button" onclick="selectGrade(1)" id="gradeBtn-1" class="grade-card p-3 rounded-2xl border-2 border-amber-400 bg-amber-50 text-left transition relative flex items-start space-x-3">
+              <span class="w-10 h-10 rounded-xl bg-amber-400 text-white font-black flex items-center justify-center text-lg flex-shrink-0 shadow-sm">1</span>
+              <div>
+                <p class="font-extrabold text-slate-800 text-sm">1 класс: Единицы</p>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">Сложение и вычитание (до 10 и 20)</p>
+              </div>
+            </button>
+
+            <!-- 2 класс -->
+            <button type="button" onclick="selectGrade(2)" id="gradeBtn-2" class="grade-card p-3 rounded-2xl border-2 border-slate-200 bg-white hover:border-sky-300 text-left transition relative flex items-start space-x-3">
+              <span class="w-10 h-10 rounded-xl bg-sky-500 text-white font-black flex items-center justify-center text-lg flex-shrink-0 shadow-sm">2</span>
+              <div>
+                <p class="font-extrabold text-slate-800 text-sm">2 класс: Десятки</p>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">Числа от 10 до 100 (+ и -)</p>
+              </div>
+            </button>
+
+            <!-- 3 класс -->
+            <button type="button" onclick="selectGrade(3)" id="gradeBtn-3" class="grade-card p-3 rounded-2xl border-2 border-slate-200 bg-white hover:border-emerald-300 text-left transition relative flex items-start space-x-3">
+              <span class="w-10 h-10 rounded-xl bg-emerald-500 text-white font-black flex items-center justify-center text-lg flex-shrink-0 shadow-sm">3</span>
+              <div>
+                <p class="font-extrabold text-slate-800 text-sm">3 класс: Сотни</p>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">Круглые сотни и числа до 1 000</p>
+              </div>
+            </button>
+
+            <!-- 4 класс -->
+            <button type="button" onclick="selectGrade(4)" id="gradeBtn-4" class="grade-card p-3 rounded-2xl border-2 border-slate-200 bg-white hover:border-purple-300 text-left transition relative flex items-start space-x-3">
+              <span class="w-10 h-10 rounded-xl bg-purple-500 text-white font-black flex items-center justify-center text-lg flex-shrink-0 shadow-sm">4</span>
+              <div>
+                <p class="font-extrabold text-slate-800 text-sm">4 класс: Тысячи</p>
+                <p class="text-xs text-slate-500 font-semibold mt-0.5">Сложные числа от 1 000 до 10 000</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Length of session -->
+        <div class="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-200">
+          <span class="text-xs md:text-sm font-bold text-slate-600">
+            <i class="fa-solid fa-list-check text-emerald-500 mr-1.5"></i> Количество задач:
+          </span>
+          <div class="flex gap-2">
+            <button type="button" onclick="setQuestionCount(5)" id="countBtn-5" class="px-3 py-1 text-xs font-bold rounded-xl border border-slate-200 bg-white text-slate-600">5</button>
+            <button type="button" onclick="setQuestionCount(10)" id="countBtn-10" class="px-3 py-1 text-xs font-bold rounded-xl border-2 border-amber-400 bg-amber-100 text-amber-900">10 задач</button>
+            <button type="button" onclick="setQuestionCount(15)" id="countBtn-15" class="px-3 py-1 text-xs font-bold rounded-xl border border-slate-200 bg-white text-slate-600">15</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Start Button -->
+      <div class="mt-6">
+        <button onclick="startGameSession()" class="btn-3d w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-kids text-xl font-bold tracking-wide shadow-lg flex items-center justify-center space-x-2">
+          <span>Вперёд к победе!</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 2: GAME ARENA -->
+    <div id="gameView" class="hidden w-full max-w-xl mx-auto math-card rounded-3xl p-5 md:p-8 border border-white/60">
+      <!-- Game Top Status Bar -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center space-x-2.5">
+          <span id="arenaAvatar" class="text-2xl">🦊</span>
+          <div>
+            <p id="arenaPlayerName" class="font-extrabold text-sm text-slate-800 leading-tight">Игрок</p>
+            <span id="arenaGradeBadge" class="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800">1 класс</span>
+          </div>
+        </div>
+        <div class="flex items-center space-x-3 text-right">
+          <div class="bg-amber-50 px-3 py-1 rounded-xl border border-amber-200 flex items-center gap-1.5">
+            <i class="fa-solid fa-star text-amber-500 text-sm"></i>
+            <span id="arenaScoreStars" class="font-black text-amber-700 text-sm">0</span>
+          </div>
+          <button onclick="confirmExitGame()" class="text-slate-400 hover:text-rose-500 p-1.5 transition" title="Выйти в меню">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress bar -->
+      <div class="mt-4">
+        <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+          <span id="progressStepText">Пример 1 из 10</span>
+          <span id="streakBadge" class="text-orange-500 font-extrabold hidden"><i class="fa-solid fa-fire"></i> Серия: 0!</span>
+        </div>
+        <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+          <div id="gameProgressBar" class="h-full bg-gradient-to-r from-amber-400 to-emerald-400 w-0 transition-all duration-300"></div>
+        </div>
+      </div>
+
+      <!-- Big Math Chalkboard Expression -->
+      <div id="equationBox" class="my-6 p-6 md:p-8 rounded-3xl bg-gradient-to-b from-slate-900 to-slate-800 text-white text-center shadow-xl border-4 border-slate-700 relative overflow-hidden transition">
+        <!-- Floating decor shapes -->
+        <span class="absolute top-2 left-3 text-slate-700 text-2xl font-kids">+</span>
+        <span class="absolute bottom-2 right-4 text-slate-700 text-2xl font-kids">−</span>
+
+        <p class="text-xs uppercase font-extrabold text-slate-400 tracking-wider mb-2" id="operationHint">Реши пример:</p>
+        <div class="flex items-center justify-center space-x-3 md:space-x-4">
+          <span id="numA" class="font-kids text-3xl sm:text-4xl md:text-5xl font-black text-amber-300">12</span>
+          <span id="mathSign" class="font-kids text-3xl sm:text-4xl md:text-5xl font-black text-sky-400">+</span>
+          <span id="numB" class="font-kids text-3xl sm:text-4xl md:text-5xl font-black text-amber-300">8</span>
+          <span class="font-kids text-3xl sm:text-4xl md:text-5xl font-black text-slate-300">=</span>
+          <span id="answerDisplay" class="font-kids text-3xl sm:text-4xl md:text-5xl font-black text-emerald-400 min-w-[70px] border-b-4 border-emerald-400 pb-1">?</span>
+        </div>
+      </div>
+
+      <!-- Interactive feedback prompt -->
+      <div id="feedbackNotice" class="text-center font-bold text-sm min-h-[22px] mb-3 text-slate-500">
+        Введи ответ с помощью кнопок или клавиатуры
+      </div>
+
+      <!-- Onscreen Numeric Keypad (friendly for mobile/tablets) -->
+      <div class="grid grid-cols-3 gap-2 max-w-xs mx-auto">
+        <button type="button" onclick="keypadPress('1')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">1</button>
+        <button type="button" onclick="keypadPress('2')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">2</button>
+        <button type="button" onclick="keypadPress('3')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">3</button>
+        
+        <button type="button" onclick="keypadPress('4')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">4</button>
+        <button type="button" onclick="keypadPress('5')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">5</button>
+        <button type="button" onclick="keypadPress('6')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">6</button>
+
+        <button type="button" onclick="keypadPress('7')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">7</button>
+        <button type="button" onclick="keypadPress('8')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">8</button>
+        <button type="button" onclick="keypadPress('9')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">9</button>
+
+        <button type="button" onclick="keypadPress('back')" class="btn-3d py-3 rounded-2xl bg-rose-50 border border-rose-200 text-lg font-bold text-rose-600 hover:bg-rose-100" title="Стереть">
+          <i class="fa-solid fa-delete-left"></i>
+        </button>
+        <button type="button" onclick="keypadPress('0')" class="btn-3d py-3 rounded-2xl bg-white border border-slate-200 text-xl font-black text-slate-800 hover:bg-slate-50">0</button>
+        <button type="button" onclick="submitAnswer()" class="btn-3d py-3 rounded-2xl bg-emerald-500 border border-emerald-600 text-xl font-black text-white hover:bg-emerald-600 shadow-md" title="Проверить">
+          <i class="fa-solid fa-check"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 3: RESULTS / DIPLOMA -->
+    <div id="resultView" class="hidden w-full max-w-xl mx-auto math-card rounded-3xl p-6 md:p-8 border border-white/60 text-center">
+      <div id="resultBadgeIcon" class="w-20 h-20 mx-auto rounded-3xl bg-amber-100 text-amber-500 flex items-center justify-center text-4xl shadow-inner mb-3">
+        🏆
+      </div>
+      <h2 id="resultHeading" class="font-kids text-2xl md:text-3xl font-extrabold text-slate-800">
+        Ура, квест пройден!
+      </h2>
+      <p id="resultSubtext" class="text-sm text-slate-600 mt-1">Твои результаты записаны в ежедневный журнал школы!</p>
+
+      <!-- Diploma Certificate Card -->
+      <div class="my-5 p-5 rounded-2xl bg-gradient-to-tr from-amber-50 to-orange-50 border-2 border-dashed border-amber-300 relative text-left">
+        <div class="flex items-center justify-between pb-2 border-b border-amber-200">
+          <span class="text-xs font-bold text-amber-800 uppercase tracking-wider">Сертификат Математика</span>
+          <span class="text-xs font-bold text-slate-500" id="resultDate">Сегодня</span>
+        </div>
+        <div class="my-3 flex items-center space-x-3">
+          <span id="resultAvatar" class="text-4xl">🦊</span>
+          <div>
+            <h3 id="resultPlayerName" class="text-xl font-black text-slate-800">Ученик</h3>
+            <p id="resultGradeText" class="text-xs font-extrabold text-indigo-600">1 класс (Единицы)</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center bg-white/80 p-3 rounded-xl border border-amber-200/80">
+          <div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase">Верно</p>
+            <p id="resCorrectCount" class="text-lg font-black text-emerald-600">10 / 10</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase">Точность</p>
+            <p id="resAccuracy" class="text-lg font-black text-amber-600">100%</p>
+          </div>
+          <div>
+            <p class="text-[10px] font-bold text-slate-400 uppercase">Оценка</p>
+            <p id="resMark" class="text-lg font-black text-purple-600">5 ⭐</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2.5">
+        <button onclick="startGameSession(true)" class="btn-3d w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-bold text-lg shadow-md flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-rotate-right"></i>
+          <span>Сыграть ещё раз</span>
+        </button>
+        <button onclick="switchView('leaderboard')" class="btn-3d w-full py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 font-bold hover:bg-slate-50 flex items-center justify-center space-x-2">
+          <i class="fa-solid fa-table-list text-sky-500"></i>
+          <span>Открыть журнал всех учеников</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- VIEW 4: LEADERBOARD & DAILY REPORT -->
+    <div id="leaderboardView" class="hidden w-full max-w-4xl mx-auto math-card rounded-3xl p-5 md:p-8 border border-white/60">
+      <div class="flex flex-col md:flex-row md:items-center justify-between pb-4 border-b border-slate-100 gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <h2 class="font-kids text-2xl font-black text-slate-800">
+              Школьный журнал результатов 📚
+            </h2>
+            <span class="px-2 py-0.5 rounded-full text-xs font-extrabold bg-emerald-100 text-emerald-700 flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Live
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 font-semibold mt-0.5">
+            Здесь автоматически сохраняются все сыгранные игры учеников по дням и классам.
+          </p>
+        </div>
+        <button onclick="switchView('welcome')" class="btn-3d self-start md:self-auto px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-500 text-slate-900 font-bold text-sm flex items-center gap-2 shadow">
+          <i class="fa-solid fa-play"></i>
+          <span>Начать игру</span>
+        </button>
+      </div>
+
+      <!-- Filters Row -->
+      <div class="mt-4 flex flex-wrap items-center justify-between gap-2.5">
+        <!-- Filter by Day -->
+        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl text-xs font-bold">
+          <button id="filterDateToday" onclick="setDateFilter('today')" class="px-3 py-1.5 rounded-lg bg-white shadow-sm text-slate-800">Сегодня</button>
+          <button id="filterDateAll" onclick="setDateFilter('all')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">За всё время</button>
+        </div>
+
+        <!-- Filter by Grade -->
+        <div class="flex items-center gap-1 overflow-x-auto text-xs font-bold">
+          <button onclick="setGradeFilter(0)" id="filterGrade-0" class="px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-900 border border-amber-300">Все классы</button>
+          <button onclick="setGradeFilter(1)" id="filterGrade-1" class="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">1 класс</button>
+          <button onclick="setGradeFilter(2)" id="filterGrade-2" class="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">2 класс</button>
+          <button onclick="setGradeFilter(3)" id="filterGrade-3" class="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">3 класс</button>
+          <button onclick="setGradeFilter(4)" id="filterGrade-4" class="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200">4 класс</button>
+        </div>
+      </div>
+
+      <!-- Records Table -->
+      <div class="mt-4 overflow-x-auto rounded-2xl border border-slate-200 max-h-[460px] overflow-y-auto">
+        <table class="w-full text-left border-collapse text-sm">
+          <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-extrabold text-xs sticky top-0 z-10">
+            <tr>
+              <th class="py-3 px-3">#</th>
+              <th class="py-3 px-3">Ученик</th>
+              <th class="py-3 px-3">Класс & Тема</th>
+              <th class="py-3 px-3">Результат</th>
+              <th class="py-3 px-3">Точность</th>
+              <th class="py-3 px-3 text-right">Время</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboardTbody" class="divide-y divide-slate-100 font-semibold text-slate-700">
+            <!-- Dynamically populated rows -->
+            <tr>
+              <td colspan="6" class="py-8 text-center text-slate-400">
+                <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-amber-500 block"></i>
+                Загрузка школьного журнала...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty State notice (hidden by default) -->
+      <div id="noResultsNotice" class="hidden py-8 text-center text-slate-400">
+        <span class="text-4xl block mb-2">🎈</span>
+        <p class="font-bold text-slate-600">В этой категории пока нет записей!</p>
+        <p class="text-xs text-slate-400 mt-0.5">Будь первым, кто решит математические примеры сегодня!</p>
+      </div>
+
+      <div class="mt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-400 gap-2">
+        <span id="filteredCountInfo">Показано записей: 0</span>
+        <button onclick="copyResultsSummary()" class="text-sky-600 hover:text-sky-800 font-bold flex items-center gap-1">
+          <i class="fa-regular fa-copy"></i> Скопировать сводку для учителя
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 max-w-sm bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-3 pointer-events-none">
+    <span id="toastIcon" class="text-xl">✨</span>
+    <div>
+      <p id="toastTitle" class="font-bold text-sm leading-tight">Успешно</p>
+      <p id="toastBody" class="text-xs text-slate-300">Сообщение</p>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    // Application state
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'kids-math-quest';
+    let db = null;
+    let auth = null;
+    let firestoreConnected = false;
+    let recordsList = []; // Array of { id, name, avatar, grade, correct, total, accuracy, timestamp, dateStr }
+
+    // Audio Synthesizer via Web Audio API (100% self-contained, no external URLs)
+    const AudioEngine = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (AudioContext) {
+            this.ctx = new AudioContext();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      },
+      playTone(freq, type = 'sine', duration = 0.15, volume = 0.15) {
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {
+          console.warn('Audio tone error:', e);
+        }
+      },
+      playCorrect() {
+        // Cheerful major chord arpeggio
+        this.playTone(523.25, 'triangle', 0.12, 0.2); // C5
+        setTimeout(() => this.playTone(659.25, 'triangle', 0.12, 0.2), 90); // E5
+        setTimeout(() => this.playTone(783.99, 'triangle', 0.25, 0.25), 180); // G5
+      },
+      playWrong() {
+        // Soft low bonk
+        this.playTone(280, 'sawtooth', 0.2, 0.15);
+        setTimeout(() => this.playTone(220, 'sawtooth', 0.3, 0.15), 140);
+      },
+      playVictory() {
+        // Fanfare
+        [523.25, 659.25, 783.99, 1046.5].forEach((f, idx) => {
+          setTimeout(() => this.playTone(f, 'sine', 0.25, 0.25), idx * 110);
+        });
+      }
+    };
+
+    async function initFirebaseStorage() {
+      try {
+        let firebaseConfig = null;
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+          firebaseConfig = JSON.parse(__firebase_config);
+        }
+
+        if (firebaseConfig) {
+          const app = initializeApp(firebaseConfig);
+          auth = getAuth(app);
+          db = getFirestore(app);
+
+          // Authenticate according to Rule 3
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+
+          // Rule 1: public path `/artifacts/{appId}/public/data/{collectionName}`
+          const resultsCol = collection(db, 'artifacts', appId, 'public', 'data', 'player_results');
+          
+          // Rule 2: Simple query without composite orderBy/where
+          onSnapshot(resultsCol, (snapshot) => {
+            firestoreConnected = true;
+            const liveItems = [];
+            snapshot.forEach(docSnap => {
+              const data = docSnap.data();
+              liveItems.push({
+                id: docSnap.id,
+                name: data.name || 'Юный математик',
+                avatar: data.avatar || '🦊',
+                grade: Number(data.grade) || 1,
+                correct: Number(data.correct) || 0,
+                total: Number(data.total) || 10,
+                accuracy: Number(data.accuracy) || 0,
+                timestamp: data.timestamp || Date.now(),
+                dateStr: data.dateStr || new Date().toLocaleDateString('ru-RU')
+              });
+            });
+            recordsList = liveItems;
+            renderLeaderboard();
+            updateDailyStats();
+          }, (err) => {
+            console.warn('Firestore onSnapshot error, falling back to session store:', err);
+            useMockStorage();
+          });
+        } else {
+          useMockStorage();
+        }
+      } catch (err) {
+        console.warn('Firebase init error, using session storage:', err);
+        useMockStorage();
+      }
+    }
+
+    function useMockStorage() {
+      firestoreConnected = false;
+      // Pre-seed with realistic playground results for students
+      if (recordsList.length === 0) {
+        const todayStr = new Date().toLocaleDateString('ru-RU');
+        const yesterday = new Date(Date.now() - 86400000).toLocaleDateString('ru-RU');
+        recordsList = [
+          { id: '1', name: 'Алиса', avatar: '🐱', grade: 1, correct: 10, total: 10, accuracy: 100, timestamp: Date.now() - 3600000 * 2, dateStr: todayStr },
+          { id: '2', name: 'Максим', avatar: '🚀', grade: 2, correct: 9, total: 10, accuracy: 90, timestamp: Date.now() - 3600000 * 4, dateStr: todayStr },
+          { id: '3', name: 'Дима', avatar: '🦁', grade: 3, correct: 10, total: 10, accuracy: 100, timestamp: Date.now() - 3600000 * 5, dateStr: todayStr },
+          { id: '4', name: 'София', avatar: '🦄', grade: 4, correct: 8, total: 10, accuracy: 80, timestamp: Date.now() - 3600000 * 25, dateStr: yesterday },
+          { id: '5', name: 'Артем', avatar: '🐻', grade: 2, correct: 10, total: 10, accuracy: 100, timestamp: Date.now() - 3600000 * 26, dateStr: yesterday }
+        ];
+      }
+      renderLeaderboard();
+      updateDailyStats();
+    }
+
+    async function savePlayerRecord(record) {
+      if (firestoreConnected && db && auth && auth.currentUser) {
+        try {
+          const resultsCol = collection(db, 'artifacts', appId, 'public', 'data', 'player_results');
+          await addDoc(resultsCol, record);
+          showToast('✅ Результат сохранён в журнал!', `${record.name} набрал(а) ${record.correct} из ${record.total}`);
+          return;
+        } catch (e) {
+          console.error('Error adding record to Firestore:', e);
+        }
+      }
+      // Session fallback
+      record.id = 'rec_' + Date.now();
+      recordsList.unshift(record);
+      renderLeaderboard();
+      updateDailyStats();
+      showToast('✅ Результат сохранён!', `${record.name} набрал(а) ${record.correct} из ${record.total}`);
+    }
+
+    // Game Session State
+    let selectedGrade = 1;
+    let selectedAvatar = '🦊';
+    let questionCount = 10;
+    let currentQuestionIndex = 0;
+    let currentStreak = 0;
+    let currentScore = 0;
+    let currentProblem = null;
+    let enteredAnswer = '';
+    let isSubmitting = false;
+
+    const gradeThemes = {
+      1: { name: '1 класс', desc: 'Единицы (+ и −)' },
+      2: { name: '2 класс', desc: 'Десятки (+ и −)' },
+      3: { name: '3 класс', desc: 'Сотни (+ и −)' },
+      4: { name: '4 класс', desc: 'Тысячи (+ и −)' }
+    };
+
+    /**
+     * Problem Generator strictly tailored to the user's specs:
+     * 1 класс: Единицы (сложение и вычитание, от 0 до 9, с суммой до 20)
+     * 2 класс: Десятки (сложение и вычитание двузначных чисел в пределах 100)
+     * 3 класс: Сотни (сложение и вычитание трехзначных чисел в пределах 1000)
+     * 4 класс: Тысячи (сложение и вычитание многозначных чисел в пределах 10000)
+     */
+    function generateProblem(grade) {
+      const isAddition = Math.random() < 0.5;
+      let a = 0;
+      let b = 0;
+      let ans = 0;
+
+      if (grade === 1) {
+        // 1 класс: Единицы
+        if (isAddition) {
+          // Числа от 1 до 9 (сумма до 18-20)
+          a = Math.floor(Math.random() * 9) + 1;
+          b = Math.floor(Math.random() * 9) + 1;
+          ans = a + b;
+        } else {
+          // Вычитание: результат всегда положительный >= 0
+          a = Math.floor(Math.random() * 15) + 2;
+          b = Math.floor(Math.random() * Math.min(a, 9)) + 1;
+          ans = a - b;
+        }
+      } else if (grade === 2) {
+        // 2 класс: Десятки (10-99)
+        if (isAddition) {
+          a = Math.floor(Math.random() * 70) + 10;
+          b = Math.floor(Math.random() * (99 - a)) + 5;
+          ans = a + b;
+        } else {
+          a = Math.floor(Math.random() * 85) + 15;
+          b = Math.floor(Math.random() * (a - 5)) + 5;
+          ans = a - b;
+        }
+      } else if (grade === 3) {
+        // 3 класс: Сотни (100-999)
+        if (isAddition) {
+          // Часто встречаются круглые сотни и смешанные сотни
+          const roundHundred = Math.random() < 0.35;
+          if (roundHundred) {
+            a = (Math.floor(Math.random() * 6) + 1) * 100;
+            b = (Math.floor(Math.random() * 3) + 1) * 100;
+          } else {
+            a = Math.floor(Math.random() * 600) + 100;
+            b = Math.floor(Math.random() * (950 - a)) + 50;
+          }
+          ans = a + b;
+        } else {
+          const roundHundred = Math.random() < 0.35;
+          if (roundHundred) {
+            a = (Math.floor(Math.random() * 7) + 3) * 100;
+            b = (Math.floor(Math.random() * 3) + 1) * 100;
+          } else {
+            a = Math.floor(Math.random() * 700) + 200;
+            b = Math.floor(Math.random() * (a - 80)) + 50;
+          }
+          ans = a - b;
+        }
+      } else if (grade === 4) {
+        // 4 класс: Тысячи (1000-9999)
+        if (isAddition) {
+          const roundThousands = Math.random() < 0.3;
+          if (roundThousands) {
+            a = (Math.floor(Math.random() * 5) + 1) * 1000;
+            b = (Math.floor(Math.random() * 4) + 1) * 1000;
+          } else {
+            a = Math.floor(Math.random() * 5500) + 1000;
+            b = Math.floor(Math.random() * (9500 - a)) + 400;
+          }
+          ans = a + b;
+        } else {
+          const roundThousands = Math.random() < 0.3;
+          if (roundThousands) {
+            a = (Math.floor(Math.random() * 6) + 3) * 1000;
+            b = (Math.floor(Math.random() * 3) + 1) * 1000;
+          } else {
+            a = Math.floor(Math.random() * 7000) + 2500;
+            b = Math.floor(Math.random() * (a - 800)) + 400;
+          }
+          ans = a - b;
+        }
+      }
+
+      return {
+        numA: a,
+        numB: b,
+        sign: isAddition ? '+' : '−',
+        answer: ans
+      };
+    }
+
+    window.selectGrade = function(g) {
+      selectedGrade = g;
+      [1, 2, 3, 4].forEach(val => {
+        const btn = document.getElementById(`gradeBtn-${val}`);
+        if (val === g) {
+          btn.className = 'grade-card p-3 rounded-2xl border-2 border-amber-400 bg-amber-50 text-left transition relative flex items-start space-x-3';
+        } else {
+          btn.className = 'grade-card p-3 rounded-2xl border-2 border-slate-200 bg-white hover:border-slate-300 text-left transition relative flex items-start space-x-3';
+        }
+      });
+      AudioEngine.playTone(440, 'sine', 0.08);
+    };
+
+    window.setQuestionCount = function(c) {
+      questionCount = c;
+      [5, 10, 15].forEach(val => {
+        const btn = document.getElementById(`countBtn-${val}`);
+        if (val === c) {
+          btn.className = 'px-3 py-1 text-xs font-bold rounded-xl border-2 border-amber-400 bg-amber-100 text-amber-900';
+        } else {
+          btn.className = 'px-3 py-1 text-xs font-bold rounded-xl border border-slate-200 bg-white text-slate-600';
+        }
+      });
+      AudioEngine.playTone(480, 'sine', 0.08);
+    };
+
+    window.toggleAvatarDrawer = function() {
+      const drawer = document.getElementById('avatarDrawer');
+      drawer.classList.toggle('hidden');
+    };
+
+    window.selectAvatar = function(emoji) {
+      selectedAvatar = emoji;
+      document.getElementById('currentAvatarEmoji').innerText = emoji;
+      document.getElementById('avatarDrawer').classList.add('hidden');
+      AudioEngine.playTone(520, 'sine', 0.08);
+    };
+
+    window.startGameSession = function(restartWithSame = false) {
+      const nameInput = document.getElementById('playerNameInput');
+      const name = nameInput.value.trim();
+
+      if (!name) {
+        document.getElementById('nameError').classList.remove('hidden');
+        nameInput.focus();
+        nameInput.parentElement.classList.add('shake-error');
+        setTimeout(() => nameInput.parentElement.classList.remove('shake-error'), 400);
+        return;
+      }
+      document.getElementById('nameError').classList.add('hidden');
+
+      // Initialize session variables
+      currentQuestionIndex = 0;
+      currentScore = 0;
+      currentStreak = 0;
+      enteredAnswer = '';
+
+      // Update Arena Header
+      document.getElementById('arenaPlayerName').innerText = name;
+      document.getElementById('arenaAvatar').innerText = selectedAvatar;
+      document.getElementById('arenaGradeBadge').innerText = gradeThemes[selectedGrade].name;
+      document.getElementById('arenaScoreStars').innerText = '0';
+      document.getElementById('streakBadge').classList.add('hidden');
+
+      switchView('game');
+      nextProblem();
+    };
+
+    function nextProblem() {
+      if (currentQuestionIndex >= questionCount) {
+        finishGameSession();
+        return;
+      }
+
+      currentQuestionIndex++;
+      enteredAnswer = '';
+      currentProblem = generateProblem(selectedGrade);
+
+      // UI updates
+      document.getElementById('progressStepText').innerText = `Пример ${currentQuestionIndex} из ${questionCount}`;
+      const progressPercent = ((currentQuestionIndex - 1) / questionCount) * 100;
+      document.getElementById('gameProgressBar').style.width = `${progressPercent}%`;
+
+      document.getElementById('numA').innerText = currentProblem.numA.toLocaleString('ru-RU');
+      document.getElementById('mathSign').innerText = currentProblem.sign;
+      document.getElementById('numB').innerText = currentProblem.numB.toLocaleString('ru-RU');
+      document.getElementById('answerDisplay').innerText = '?';
+
+      const feedback = document.getElementById('feedbackNotice');
+      feedback.innerText = 'Введи ответ:';
+      feedback.className = 'text-center font-bold text-sm min-h-[22px] mb-3 text-slate-500';
+
+      const eqBox = document.getElementById('equationBox');
+      eqBox.classList.remove('shake-error');
+      isSubmitting = false;
+    }
+
+    window.keypadPress = function(char) {
+      AudioEngine.playTone(580, 'sine', 0.04, 0.08);
+      if (char === 'back') {
+        enteredAnswer = enteredAnswer.slice(0, -1);
+      } else {
+        if (enteredAnswer.length < 7) { // Support large numbers for 4th grade
+          enteredAnswer += char;
+        }
+      }
+      const display = document.getElementById('answerDisplay');
+      display.innerText = enteredAnswer === '' ? '?' : enteredAnswer;
+    };
+
+    window.submitAnswer = function() {
+      if (isSubmitting || enteredAnswer === '') return;
+      isSubmitting = true;
+
+      const userNum = parseInt(enteredAnswer, 10);
+      const isCorrect = userNum === currentProblem.answer;
+      const feedback = document.getElementById('feedbackNotice');
+      const eqBox = document.getElementById('equationBox');
+
+      if (isCorrect) {
+        currentScore++;
+        currentStreak++;
+        AudioEngine.playCorrect();
+
+        feedback.innerHTML = '<span class="text-emerald-600 font-extrabold">🎉 Молодец! Абсолютно верно!</span>';
+        document.getElementById('arenaScoreStars').innerText = currentScore;
+
+        if (currentStreak >= 2) {
+          const streakEl = document.getElementById('streakBadge');
+          streakEl.innerHTML = `<i class="fa-solid fa-fire"></i> Серия: ${currentStreak}!`;
+          streakEl.classList.remove('hidden');
+        }
+
+        // Tiny confetti poof on correct answer
+        if (window.confetti) {
+          confetti({
+            particleCount: 25,
+            spread: 50,
+            origin: { y: 0.65 }
+          });
+        }
+
+        setTimeout(() => {
+          nextProblem();
+        }, 900);
+
+      } else {
+        currentStreak = 0;
+        document.getElementById('streakBadge').classList.add('hidden');
+        AudioEngine.playWrong();
+
+        feedback.innerHTML = `<span class="text-rose-500 font-extrabold">Ой! Правильный ответ был: ${currentProblem.answer}</span>`;
+        eqBox.classList.add('shake-error');
+
+        setTimeout(() => {
+          nextProblem();
+        }, 1500);
+      }
+    };
+
+    // Keyboard support (typing numbers and Enter directly)
+    window.addEventListener('keydown', (e) => {
+      const gameView = document.getElementById('gameView');
+      if (gameView.classList.contains('hidden')) return;
+
+      if (e.key >= '0' && e.key <= '9') {
+        keypadPress(e.key);
+      } else if (e.key === 'Backspace') {
+        keypadPress('back');
+      } else if (e.key === 'Enter') {
+        submitAnswer();
+      }
+    });
+
+    function finishGameSession() {
+      // Complete progress bar
+      document.getElementById('gameProgressBar').style.width = '100%';
+      AudioEngine.playVictory();
+
+      const name = document.getElementById('playerNameInput').value.trim() || 'Ученик';
+      const accuracy = Math.round((currentScore / questionCount) * 100);
+      const todayStr = new Date().toLocaleDateString('ru-RU');
+      const mark = accuracy >= 90 ? '5 ⭐' : accuracy >= 70 ? '4 🌟' : accuracy >= 50 ? '3 🥈' : '2 ✏️';
+
+      // Fill Diploma View
+      document.getElementById('resultAvatar').innerText = selectedAvatar;
+      document.getElementById('resultPlayerName').innerText = name;
+      document.getElementById('resultGradeText').innerText = `${gradeThemes[selectedGrade].name} (${gradeThemes[selectedGrade].desc})`;
+      document.getElementById('resultDate').innerText = todayStr;
+      document.getElementById('resCorrectCount').innerText = `${currentScore} / ${questionCount}`;
+      document.getElementById('resAccuracy').innerText = `${accuracy}%`;
+      document.getElementById('resMark').innerText = mark;
+
+      if (accuracy >= 80) {
+        document.getElementById('resultHeading').innerText = 'Блестящая победа! 🏆';
+        document.getElementById('resultBadgeIcon').innerText = '🌟';
+        if (window.confetti) {
+          confetti({
+            particleCount: 100,
+            spread: 80,
+            origin: { y: 0.5 }
+          });
+        }
+      } else {
+        document.getElementById('resultHeading').innerText = 'Хорошая тренировка! 👍';
+        document.getElementById('resultBadgeIcon').innerText = '🎯';
+      }
+
+      // Record object for persistence
+      const record = {
+        name: name,
+        avatar: selectedAvatar,
+        grade: selectedGrade,
+        correct: currentScore,
+        total: questionCount,
+        accuracy: accuracy,
+        timestamp: Date.now(),
+        dateStr: todayStr
+      };
+
+      savePlayerRecord(record);
+      switchView('result');
+    }
+
+    window.confirmExitGame = function() {
+      if (confirm('Хочешь прервать игру и вернуться на главный экран?')) {
+        switchView('welcome');
+      }
+    };
+
+    let activeDateFilter = 'today'; // 'today' or 'all'
+    let activeGradeFilter = 0; // 0: all, 1: 1st, 2: 2nd, 3: 3rd, 4: 4th
+
+    window.setDateFilter = function(filter) {
+      activeDateFilter = filter;
+      const todayBtn = document.getElementById('filterDateToday');
+      const allBtn = document.getElementById('filterDateAll');
+
+      if (filter === 'today') {
+        todayBtn.className = 'px-3 py-1.5 rounded-lg bg-white shadow-sm text-slate-800';
+        allBtn.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900';
+      } else {
+        allBtn.className = 'px-3 py-1.5 rounded-lg bg-white shadow-sm text-slate-800';
+        todayBtn.className = 'px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900';
+      }
+      renderLeaderboard();
+    };
+
+    window.setGradeFilter = function(g) {
+      activeGradeFilter = g;
+      [0, 1, 2, 3, 4].forEach(val => {
+        const btn = document.getElementById(`filterGrade-${val}`);
+        if (val === g) {
+          btn.className = 'px-2.5 py-1.5 rounded-lg bg-amber-100 text-amber-900 border border-amber-300';
+        } else {
+          btn.className = 'px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200';
+        }
+      });
+      renderLeaderboard();
+    };
+
+    function updateDailyStats() {
+      const todayStr = new Date().toLocaleDateString('ru-RU');
+      const total = recordsList.length;
+      const todayRecords = recordsList.filter(r => r.dateStr === todayStr);
+      const perfect = recordsList.filter(r => r.accuracy === 100).length;
+
+      document.getElementById('statTotalGames').innerText = total;
+      document.getElementById('statTodayGames').innerText = todayRecords.length;
+      document.getElementById('statPerfectGames').innerText = perfect;
+
+      // Grade breakdown for leader
+      const counts = { 1: 0, 2: 0, 3: 0, 4: 0 };
+      recordsList.forEach(r => {
+        if (counts[r.grade] !== undefined) counts[r.grade]++;
+      });
+      let topG = 1;
+      let maxG = -1;
+      for (const [g, count] of Object.entries(counts)) {
+        if (count > maxG) {
+          maxG = count;
+          topG = g;
+        }
+      }
+      document.getElementById('statTopGrade').innerText = `${topG} класс (${maxG} игр)`;
+    }
+
+    function renderLeaderboard() {
+      const tbody = document.getElementById('leaderboardTbody');
+      const emptyNotice = document.getElementById('noResultsNotice');
+      const todayStr = new Date().toLocaleDateString('ru-RU');
+
+      // Filter
+      let filtered = [...recordsList];
+      if (activeDateFilter === 'today') {
+        filtered = filtered.filter(r => r.dateStr === todayStr);
+      }
+      if (activeGradeFilter > 0) {
+        filtered = filtered.filter(r => r.grade === activeGradeFilter);
+      }
+
+      // Sort: highest accuracy first, then most recent
+      filtered.sort((a, b) => {
+        if (b.accuracy !== a.accuracy) return b.accuracy - a.accuracy;
+        return b.timestamp - a.timestamp;
+      });
+
+      document.getElementById('filteredCountInfo').innerText = `Показано записей: ${filtered.length}`;
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '';
+        emptyNotice.classList.remove('hidden');
+        return;
+      }
+      emptyNotice.classList.add('hidden');
+
+      let html = '';
+      filtered.forEach((rec, idx) => {
+        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}`;
+        const timeFormatted = new Date(rec.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        const gradeBadgeColor = rec.grade === 1 ? 'bg-amber-100 text-amber-800' :
+                                rec.grade === 2 ? 'bg-sky-100 text-sky-800' :
+                                rec.grade === 3 ? 'bg-emerald-100 text-emerald-800' :
+                                'bg-purple-100 text-purple-800';
+
+        html += `
+          <tr class="hover:bg-amber-50/50 transition">
+            <td class="py-3 px-3 font-black text-slate-400">${medal}</td>
+            <td class="py-3 px-3">
+              <div class="flex items-center space-x-2">
+                <span class="text-xl">${rec.avatar}</span>
+                <span class="font-extrabold text-slate-800">${escapeHtml(rec.name)}</span>
+              </div>
+            </td>
+            <td class="py-3 px-3">
+              <span class="px-2 py-0.5 rounded-full text-xs font-bold ${gradeBadgeColor}">
+                ${rec.grade} класс (${gradeThemes[rec.grade]?.name.split(' ')[0] || ''})
+              </span>
+            </td>
+            <td class="py-3 px-3 font-bold text-slate-800">
+              ${rec.correct} <span class="text-slate-400 font-normal">из</span> ${rec.total}
+            </td>
+            <td class="py-3 px-3">
+              <div class="flex items-center gap-1.5">
+                <span class="font-black ${rec.accuracy >= 90 ? 'text-emerald-600' : rec.accuracy >= 70 ? 'text-amber-600' : 'text-slate-600'}">
+                  ${rec.accuracy}%
+                </span>
+                ${rec.accuracy === 100 ? '<i class="fa-solid fa-star text-amber-400 text-xs"></i>' : ''}
+              </div>
+            </td>
+            <td class="py-3 px-3 text-right text-xs text-slate-400">
+              ${rec.dateStr === todayStr ? timeFormatted : rec.dateStr}
+            </td>
+          </tr>
+        `;
+      });
+
+      tbody.innerHTML = html;
+    }
+
+    window.switchView = function(viewName) {
+      const views = ['welcome', 'game', 'result', 'leaderboard'];
+      views.forEach(v => {
+        const el = document.getElementById(`${v}View`);
+        if (el) el.classList.add('hidden');
+      });
+
+      const target = document.getElementById(`${viewName}View`);
+      if (target) target.classList.remove('hidden');
+
+      // Update Nav Buttons
+      const navGame = document.getElementById('navGameBtn');
+      const navStats = document.getElementById('navStatsBtn');
+      if (viewName === 'leaderboard') {
+        navStats.className = 'px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-sm font-bold bg-sky-200 text-sky-900 transition flex items-center gap-1.5';
+        navGame.className = 'px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-sm font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition flex items-center gap-1.5';
+      } else {
+        navGame.className = 'px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-sm font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 transition flex items-center gap-1.5';
+        navStats.className = 'px-3 py-1.5 md:px-4 md:py-2 rounded-xl text-sm font-bold bg-sky-50 text-sky-700 hover:bg-sky-100 transition flex items-center gap-1.5';
+      }
+
+      if (viewName === 'leaderboard') {
+        renderLeaderboard();
+      }
+    };
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m];
+      });
+    }
+
+    function showToast(title, body) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastTitle').innerText = title;
+      document.getElementById('toastBody').innerText = body;
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3500);
+    }
+
+    window.copyResultsSummary = function() {
+      const todayStr = new Date().toLocaleDateString('ru-RU');
+      const todayRecords = recordsList.filter(r => r.dateStr === todayStr);
+      let summaryText = `📊 СВОДКА ПО МАТЕМАТИКЕ (${todayStr})\n`;
+      summaryText += `Всего участников сегодня: ${todayRecords.length}\n`;
+      summaryText += `----------------------------------------\n`;
+      todayRecords.forEach((r, i) => {
+        summaryText += `${i+1}. ${r.name} (${r.grade} кл): ${r.correct}/${r.total} (${r.accuracy}%)\n`;
+      });
+
+      // Use document.execCommand('copy') as per instructions
+      const tempArea = document.createElement('textarea');
+      tempArea.value = summaryText;
+      tempArea.style.position = 'fixed';
+      tempArea.style.opacity = '0';
+      document.body.appendChild(tempArea);
+      tempArea.select();
+      try {
+        document.execCommand('copy');
+        showToast('📋 Сводка скопирована!', 'Текст отчёта готов для отправки в учительский чат.');
+      } catch (e) {
+        showToast('⚠️ Ошибка копирования', 'Попробуйте выделить текст вручную.');
+      }
+      document.body.removeChild(tempArea);
+    };
+
+    // Initialize application on load
+    window.addEventListener('load', () => {
+      initFirebaseStorage();
+    });
+  </script>
+</body>
+</html>
